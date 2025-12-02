@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getSensorInformation } from './api/netpie'
 import type { SensorData } from './interface/sensor'
 
@@ -36,16 +36,23 @@ async function fetchData() {
   }
 }
 
-fetchData()
+let intervalId: number
+
+onMounted(() => {
+  fetchData()
+  intervalId = setInterval(fetchData, 1000)
+})
+
+onUnmounted(() => {
+  clearInterval(intervalId)
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-linear-to-b from-gray-100 to-gray-200 flex flex-col items-center p-6">
-    <h1
-      class="text-4xl font-bold mb-8 text-gray-900 bg-clip-text bg-linear-to-r from-blue-500 to-purple-500"
-    >
-      Embed888 Dashboard
-    </h1>
+  <div
+    class="min-h-screen bg-linear-to-br from-gray-100 to-gray-300 flex flex-col items-center p-6"
+  >
+    <h1 class="text-4xl font-bold mb-8 text-gray-900">Embed888 Dashboard</h1>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 w-full max-w-5xl">
       <div
@@ -76,13 +83,5 @@ fetchData()
     >
       {{ error }}
     </div>
-
-    <button
-      @click="fetchData"
-      class="mt-10 px-8 py-3 bg-linear-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-      :disabled="loading"
-    >
-      {{ loading ? 'Refreshing...' : 'Refresh' }}
-    </button>
   </div>
 </template>
