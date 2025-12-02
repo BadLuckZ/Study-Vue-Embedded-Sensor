@@ -4,6 +4,7 @@ import { getSensorInformation } from './api/netpie'
 import type { SensorData } from './interface/sensor'
 
 const loading = ref(false)
+const error = ref('')
 
 const sensorData = ref<SensorData>({
   temperature: 0,
@@ -14,16 +15,22 @@ const sensorData = ref<SensorData>({
 async function fetchData() {
   try {
     loading.value = true
+    error.value = ''
 
     const fetchedSensorData = await getSensorInformation()
 
-    sensorData.value = {
-      temperature: Math.floor(fetchedSensorData?.data.temperature ?? 0),
-      humid: Math.floor(fetchedSensorData?.data.humid ?? 0),
-      light: Math.floor(fetchedSensorData?.data.light ?? 0),
+    if (!fetchedSensorData || !fetchedSensorData.data) {
+      throw new Error('No data received from server')
     }
-  } catch (e) {
+
+    sensorData.value = {
+      temperature: Math.floor(fetchedSensorData.data.temperature ?? 0),
+      humid: Math.floor(fetchedSensorData.data.humid ?? 0),
+      light: Math.floor(fetchedSensorData.data.light ?? 0),
+    }
+  } catch (e: any) {
     console.error(e)
+    error.value = e.message || 'Something went wrong while fetching data'
   } finally {
     loading.value = false
   }
@@ -34,7 +41,7 @@ fetchData()
 
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col items-center p-6">
-    <h1 class="text-3xl font-bold mb-6 text-">Embed888 Dashboard</h1>
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Embed888 Dashboard</h1>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
       <div class="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition">
@@ -53,12 +60,19 @@ fetchData()
       </div>
     </div>
 
+    <div
+      v-if="error"
+      class="mt-4 p-4 bg-red-100 text-red-500 rounded-xl max-w-4xl w-full text-center font-medium"
+    >
+      {{ error }}
+    </div>
+
     <button
       @click="fetchData"
-      class="mt-8 px-6 py-3 bg-black text-white font-medium rounded-xl shadow cursor-pointer disabled:cursor-default"
+      class="mt-8 px-6 py-3 bg-black text-white font-medium rounded-xl shadow cursor-pointer disabled:cursor-default disabled:opacity-50"
       :disabled="loading"
     >
-      {{ loading ? 'Refreshing...' : 'Refresh Data' }}
+      {{ loading ? 'Refreshing...' : 'Refresh' }}
     </button>
   </div>
 </template>
